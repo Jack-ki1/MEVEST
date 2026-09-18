@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { useWatchlist } from '@/context/WatchlistContext';
+import { useWatchlist } from '@/context/useWatchlist';
 import { useRealtimeMarket } from '@/context/RealtimeMarketContext';
 import { formatPct, genLine } from '@/data/market-data';
 import { MARKET } from '@/data/market-data';

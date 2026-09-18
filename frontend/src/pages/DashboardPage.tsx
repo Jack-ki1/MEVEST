@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { usePortfolio } from '@/context/PortfolioContext';
+import { usePortfolio } from '@/context/usePortfolio';
 import { useRealtimeMarket } from '@/context/RealtimeMarketContext';
 import { MARKET, FEAR_GREED, SECTOR_PERFORMANCE, formatMoney, formatPct, MARKET_REGIONS } from '@/data/market-data';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';

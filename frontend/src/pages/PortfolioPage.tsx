@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { usePortfolio } from '@/context/PortfolioContext';
+import { usePortfolio } from '@/context/usePortfolio';
 import { useRealtimeMarket } from '@/context/RealtimeMarketContext';
 import { formatMoney, formatPct, MARKET } from '@/data/market-data';
 import { toast } from '@/hooks/use-toast';

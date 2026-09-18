@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRealtimeMarket } from '@/context/RealtimeMarketContext';
 import { formatPct } from '@/data/market-data';
-import { useWatchlist } from '@/context/WatchlistContext';
+import { useWatchlist } from '@/context/useWatchlist';
 import { toast } from '@/hooks/use-toast';
 import { Star, Globe, Loader2, X, Bookmark, Search, Filter, Zap, TrendingUp, Sparkles, Plus, Trash2, Play, Copy, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/useAuth';
 import { evaluatePineLite } from '@/lib/pineLite';
 import SuggestedPrompts from '@/components/SuggestedPrompts';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';

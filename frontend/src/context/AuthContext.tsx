@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
+import { useDemo } from '@/context/DemoContext';
+import { 
+  ADMIN_ID, 
+  ADMIN_STORAGE_KEY, 
+  isAdminBypassEnabled 
+} from './auth-config';
 
 interface AuthContextType {
   user: User | null;
@@ -13,27 +19,11 @@ interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
-// Admin bypass — disabled by default. Enabled ONLY when both env vars are explicitly set.
-// Fail-closed: no hardcoded fallback password is baked into the bundle.
-// Disable globally with VITE_DISABLE_ADMIN_BYPASS=true. In production builds the
-// presence of the bypass is flagged in the console as a warning.
-const ADMIN_EMAIL = (import.meta.env.VITE_ADMIN_EMAIL as string | undefined)?.trim().toLowerCase() ?? '';
-const ADMIN_PASSWORD = (import.meta.env.VITE_ADMIN_PASSWORD as string | undefined) ?? '';
-const ADMIN_ID = '00000000-0000-0000-0000-admin00000001';
-const ADMIN_STORAGE_KEY = 'mevest_admin_session';
-
-export const isAdminBypassEnabled = (() => {
-  if (import.meta.env.VITE_DISABLE_ADMIN_BYPASS === 'true') return false;
-  return Boolean(ADMIN_EMAIL && ADMIN_PASSWORD);
-})();
-
-if (isAdminBypassEnabled && import.meta.env.PROD) {
-  console.warn('[Auth] Admin bypass is ENABLED in a production build — ensure credentials are not public and disable via VITE_DISABLE_ADMIN_BYPASS=true if not needed.');
-}
-
+// Admin bypass helper functions
 function createMockAdminUser(): User {
+  const ADMIN_EMAIL = (import.meta.env.VITE_ADMIN_EMAIL as string | undefined)?.trim().toLowerCase() ?? '';
   const now = new Date().toISOString();
   return {
     id: ADMIN_ID,
@@ -94,12 +84,55 @@ function clearAdminSession() {
   }
 }
 
+// Demo mode mock user
+function createDemoUser(): User {
+  const now = new Date().toISOString();
+  return {
+    id: 'demo-user-0000-0000-0000-000000000001',
+    aud: 'authenticated',
+    role: 'authenticated',
+    email: 'demo@mevest.africa',
+    email_confirmed_at: now,
+    phone: '',
+    confirmed_at: now,
+    last_sign_in_at: now,
+    app_metadata: { provider: 'email', providers: ['email'] },
+    user_metadata: { full_name: 'Demo User', role: 'user' },
+    identities: [],
+    created_at: now,
+    updated_at: now,
+  } as unknown as User;
+}
+
+function createDemoSession(): Session {
+  const user = createDemoUser();
+  return {
+    access_token: 'demo-access-token',
+    refresh_token: 'demo-refresh-token',
+    expires_in: 86400,
+    expires_at: Math.floor(Date.now() / 1000) + 86400,
+    token_type: 'bearer',
+    user,
+  } as unknown as Session;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { isDemoMode } = useDemo();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Demo mode: auto-login with demo user
+    if (isDemoMode) {
+      const demoUser = createDemoUser();
+      const demoSession = createDemoSession();
+      setUser(demoUser);
+      setSession(demoSession);
+      setLoading(false);
+      return;
+    }
+
     // 1. Check for persisted admin session first — instant login
     const admin = loadAdminSession();
     if (admin) {
@@ -126,9 +159,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [isDemoMode]);
 
   const signUp = async (email: string, password: string, fullName: string) => {
+    // Demo mode: prevent real signup
+    if (isDemoMode) {
+      return { error: { message: 'Sign up is disabled in demo mode. This is a read-only preview.' } };
+    }
+    
+    const ADMIN_EMAIL = (import.meta.env.VITE_ADMIN_EMAIL as string | undefined)?.trim().toLowerCase() ?? '';
     // Block admin email from real signup when bypass is enabled
     if (isAdminBypassEnabled && email.trim().toLowerCase() === ADMIN_EMAIL) {
       return { error: { message: 'This email is reserved for admin access. Use Sign In with the admin password.' } };
@@ -145,7 +184,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
+    // Demo mode: prevent real login
+    if (isDemoMode) {
+      return { error: { message: 'Login is disabled in demo mode. You are already logged in as Demo User.' } };
+    }
+
     const cleanEmail = email.trim().toLowerCase();
+    const ADMIN_EMAIL = (import.meta.env.VITE_ADMIN_EMAIL as string | undefined)?.trim().toLowerCase() ?? '';
+    const ADMIN_PASSWORD = (import.meta.env.VITE_ADMIN_PASSWORD as string | undefined) ?? '';
 
     // Admin bypass: only when explicitly enabled via env
     if (isAdminBypassEnabled && cleanEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
@@ -162,6 +208,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resendConfirmation = async (email: string) => {
+    if (isDemoMode) {
+      return { error: { message: 'Email confirmation is disabled in demo mode.' } };
+    }
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email: email.trim().toLowerCase(),
@@ -171,7 +220,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
+    // Demo mode: prevent password reset
+    if (isDemoMode) {
+      return { error: { message: 'Password reset is disabled in demo mode.' } };
+    }
+    
     // Admin uses mock auth — no reset via Supabase
+    const ADMIN_EMAIL = (import.meta.env.VITE_ADMIN_EMAIL as string | undefined)?.trim().toLowerCase() ?? '';
     if (isAdminBypassEnabled && email.trim().toLowerCase() === ADMIN_EMAIL) {
       return { error: { message: 'Admin password is set via VITE_ADMIN_PASSWORD in .env. Change it there and restart the dev server.' } };
     }
@@ -182,6 +237,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    // Demo mode: prevent logout
+    if (isDemoMode) {
+      return;
+    }
+    
     if (loadAdminSession()) {
       clearAdminSession();
       setUser(null);
@@ -198,11 +258,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
-}
 
-// Exported for testing / optional hint — does not contain password.
-export const ADMIN_CREDENTIALS = { email: ADMIN_EMAIL, enabled: isAdminBypassEnabled };

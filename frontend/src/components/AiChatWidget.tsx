@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Bot, User, Sparkles, Trash2, Wrench } from 'lucide-react';
-import { usePortfolio } from '@/context/PortfolioContext';
-import { useAuth } from '@/context/AuthContext';
+import { usePortfolio } from '@/context/usePortfolio';
+import { useAuth } from '@/context/useAuth';
 import ReactMarkdown from 'react-markdown';
 
 type Msg = { role: 'user' | 'assistant'; content: string };

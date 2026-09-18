@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/useAuth';
 import { useRealtimeMarket } from '@/context/RealtimeMarketContext';
+import { useDemo } from '@/context/DemoContext';
+import { DEMO_WATCHLIST } from '@/data/demo-data';
 
 interface WatchlistContextType {
   watchlist: string[];
@@ -10,14 +12,21 @@ interface WatchlistContextType {
   isInWatchlist: (sym: string) => boolean;
 }
 
-const WatchlistContext = createContext<WatchlistContextType | null>(null);
+export const WatchlistContext = createContext<WatchlistContextType | null>(null);
 
 export function WatchlistProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const { isDemoMode } = useDemo();
   const { registerSymbols } = useRealtimeMarket();
   const [watchlist, setWatchlist] = useState<string[]>([]);
 
-  const loadWatchlist = useCallback(() => {
+  const loadWatchlist = useCallback(async () => {
+    // Demo mode: use sample watchlist
+    if (isDemoMode) {
+      setWatchlist(DEMO_WATCHLIST.map(w => w.sym));
+      return;
+    }
+
     if (!user) {
       try {
         const demo = localStorage.getItem('mevest_demo_watchlist');
@@ -29,33 +38,35 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
       }
       return;
     }
-    supabase
-      .from('watchlist_items')
-      .select('symbol')
-      .eq('user_id', user.id)
-      .then(({ data, error }) => {
-        if (!error && data) setWatchlist(data.map((d: { symbol: string }) => d.symbol));
-        else if (error) {
-          console.warn('[Watchlist] load failed, using cache:', error.message);
-          try {
-            const cached = localStorage.getItem(`mevest_watchlist_${user.id}`);
-            if (cached) setWatchlist(JSON.parse(cached));
-          } catch (err) {
-            console.warn('[Watchlist] cache read failed', err);
-          }
-        }
-      })
-      .catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.warn('[Watchlist] network error, using cache:', msg);
+    
+    try {
+      const { data, error } = await supabase
+        .from('watchlist_items')
+        .select('symbol')
+        .eq('user_id', user.id);
+        
+      if (!error && data) {
+        setWatchlist(data.map((d: { symbol: string }) => d.symbol));
+      } else if (error) {
+        console.warn('[Watchlist] load failed, using cache:', error.message);
         try {
           const cached = localStorage.getItem(`mevest_watchlist_${user.id}`);
           if (cached) setWatchlist(JSON.parse(cached));
-        } catch (cacheErr) {
-          console.warn('[Watchlist] cache read failed', cacheErr);
+        } catch (err) {
+          console.warn('[Watchlist] cache read failed', err);
         }
-      });
-  }, [user]);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn('[Watchlist] network error, using cache:', msg);
+      try {
+        const cached = localStorage.getItem(`mevest_watchlist_${user.id}`);
+        if (cached) setWatchlist(JSON.parse(cached));
+      } catch (cacheErr) {
+        console.warn('[Watchlist] cache read failed', cacheErr);
+      }
+    }
+  }, [user, isDemoMode]);
 
   useEffect(() => { loadWatchlist(); }, [loadWatchlist]);
 
@@ -71,6 +82,12 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
   }, [loadWatchlist]);
 
   const addToWatchlist = useCallback(async (sym: string) => {
+    // Demo mode: just update state
+    if (isDemoMode) {
+      setWatchlist(prev => prev.includes(sym) ? prev : [...prev, sym]);
+      return;
+    }
+
     if (!user) return;
     setWatchlist(prev => {
       const next = prev.includes(sym) ? prev : [...prev, sym];
@@ -81,9 +98,15 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
     });
     const { error } = await supabase.from('watchlist_items').upsert({ user_id: user.id, symbol: sym }, { onConflict: 'user_id,symbol' });
     if (error) console.warn('[Watchlist] upsert failed:', error.message);
-  }, [user]);
+  }, [user, isDemoMode]);
 
   const removeFromWatchlist = useCallback(async (sym: string) => {
+    // Demo mode: just update state
+    if (isDemoMode) {
+      setWatchlist(prev => prev.filter(s => s !== sym));
+      return;
+    }
+
     if (!user) return;
     setWatchlist(prev => {
       const next = prev.filter(s => s !== sym);
@@ -94,7 +117,7 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
     });
     const { error } = await supabase.from('watchlist_items').delete().eq('user_id', user.id).eq('symbol', sym);
     if (error) console.warn('[Watchlist] delete failed:', error.message);
-  }, [user]);
+  }, [user, isDemoMode]);
 
   const isInWatchlist = useCallback((sym: string) => watchlist.includes(sym), [watchlist]);
 
@@ -103,10 +126,4 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
       {children}
     </WatchlistContext.Provider>
   );
-}
-
-export function useWatchlist() {
-  const ctx = useContext(WatchlistContext);
-  if (!ctx) throw new Error('useWatchlist must be used within WatchlistProvider');
-  return ctx;
 }

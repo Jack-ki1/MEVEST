@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Box, Activity, TrendingUp, List, FileText, Settings,
   Calendar, Star, X, LogOut, Users, GraduationCap,
 } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/useAuth';
 import { useLanguage } from '@/context/LanguageContext';
 
 const NAV_SECTIONS = [

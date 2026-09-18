@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { EARNINGS_CALENDAR, ECONOMIC_CALENDAR } from '@/data/market-data';
 import { supabase } from '@/integrations/supabase/client';
-import { usePortfolio } from '@/context/PortfolioContext';
+import { usePortfolio } from '@/context/usePortfolio';
 import { toast } from '@/hooks/use-toast';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/useAuth';
 import { Calendar, Clock, TrendingUp, Split, Rocket, Timer, ExternalLink, Plus, Bell, Play, Filter } from 'lucide-react';
 
 const TABS = ['earnings', 'economic', 'dividends', 'ipos', 'splits'] as const;

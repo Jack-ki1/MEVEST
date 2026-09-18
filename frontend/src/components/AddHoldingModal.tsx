@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { usePortfolio } from '@/context/PortfolioContext';
+import { usePortfolio } from '@/context/usePortfolio';
 import { MARKET } from '@/data/market-data';
 import { marketApi } from '@/lib/api/market';
 import { toast } from '@/hooks/use-toast';

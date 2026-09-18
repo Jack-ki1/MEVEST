@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
-import { usePortfolio } from '@/context/PortfolioContext';
+import { usePortfolio } from '@/context/usePortfolio';
 import { supabase } from '@/integrations/supabase/client';
 import { dailyReturns, volatility, sharpeRatio, maxDrawdown, beta, cagr, sortinoRatio, calmarRatio } from '@/lib/analytics/riskMetrics';
 import { twrr, fifoCostBasis, wacCostBasis, withTransactionCosts, regimeLabel } from '@/lib/analytics/extendedMetrics';
 import RatesComparator from '@/components/RatesComparator';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import {

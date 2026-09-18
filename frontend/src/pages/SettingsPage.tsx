@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Bell, Key, Shield, CreditCard, Eye, EyeOff, CheckCircle, XCircle, Loader2, FlaskConical, Download, Palette, Search, Sparkles, Package } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { usePortfolio } from '@/context/PortfolioContext';
-import { useWatchlist } from '@/context/WatchlistContext';
+import { usePortfolio } from '@/context/usePortfolio';
+import { useWatchlist } from '@/context/useWatchlist';
 import { marketApi } from '@/lib/api/market';
 
 const TABS = [
