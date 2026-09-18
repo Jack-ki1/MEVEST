@@ -1,1 +1,0 @@
-import{r}from"./vendor-CQocOPQg.js";import{W as s}from"./index-DGkYYntE.js";function i(){const t=r.useContext(s);if(!t)throw new Error("useWatchlist must be used within WatchlistProvider");return t}export{i as u};
