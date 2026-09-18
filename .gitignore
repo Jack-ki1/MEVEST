@@ -7,6 +7,7 @@ backend/node_modules/
 dist/
 dist-ssr/
 frontend/dist/
+frontend/dist-github/
 build/
 
 # Environment variables — NEVER commit real secrets

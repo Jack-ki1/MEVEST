@@ -1,1 +1,0 @@
-function n(r,t){const e=t==="KES"?"en-KE":"en-US";try{return new Intl.NumberFormat(e,{style:"currency",currency:t,maximumFractionDigits:2}).format(r)}catch{return`${t} ${r.toLocaleString()}`}}export{n as f};
