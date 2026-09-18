@@ -7,7 +7,7 @@ export default defineConfig(({ command, mode }) => {
   const isGitHubPages = mode === 'github-pages';
   
   return {
-    base: isGitHubPages ? '/mevest-africa-vault/' : '/',
+    base: isGitHubPages ? '/MEVEST/' : '/',
     server: {
       host: "::",
       port: 8080,
