@@ -1,35 +1,27 @@
-# Env — never commit real keys (see root .gitignore)
-.env
-.env.local
-.env.development
-.env.production
-.env.*.local
+# --------------------------------------------------
+# Security / Secrets — NEVER commit these
+# --------------------------------------------------
 
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+secrets/
+credentials/
+.secret/
+.private/
 
-node_modules
-dist
-dist-github
-dist-ssr
-*.local
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
 
-# Supabase local temp (if ever run from frontend)
-.supabase/
+credentials*.json
+service-account*.json
+*-credentials.json
+client-secret*.json
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+.env.test
+frontend/.env.test
+backend/.env.test
+
+*.dump
+*.bak
+*.backup
